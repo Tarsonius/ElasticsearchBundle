@@ -63,6 +63,11 @@ class Manager
     private $indexSettings;
 
     /**
+     * @var string
+     */
+    private $indexDateString;
+
+    /**
      * @var MetadataCollector
      */
     private $metadataCollector;
@@ -124,6 +129,7 @@ class Manager
         $this->config = $config;
         $this->client = $client;
         $this->indexSettings = $indexSettings;
+        $this->indexDateString = date($this->indexSettings['index_pattern']);
         $this->metadataCollector = $metadataCollector;
         $this->converter = $converter;
     }
@@ -281,7 +287,7 @@ class Manager
     public function search(array $types, array $query, array $queryStringParams = [])
     {
         $params = [];
-        $params['index'] = $this->getIndexName();
+        $params['index'] = $this->getIndexReadName();
         
         $resolvedTypes = [];
         foreach ($types as $type) {
@@ -347,7 +353,7 @@ class Manager
      */
     public function flush(array $params = [])
     {
-        return $this->client->indices()->flush(array_merge(['index' => $this->getIndexName()], $params));
+        return $this->client->indices()->flush(array_merge(['index' => $this->getIndexWriteName()], $params));
     }
 
     /**
@@ -359,7 +365,7 @@ class Manager
      */
     public function refresh(array $params = [])
     {
-        return $this->client->indices()->refresh(array_merge(['index' => $this->getIndexName()], $params));
+        return $this->client->indices()->refresh(array_merge(['index' => $this->getIndexWriteName()], $params));
     }
 
     /**
@@ -375,7 +381,7 @@ class Manager
     {
         if (!empty($this->bulkQueries)) {
             $bulkQueries = array_merge($this->bulkQueries, $this->bulkParams);
-            $bulkQueries['index']['_index'] = $this->getIndexName();
+            $bulkQueries['index']['_index'] = $this->getIndexWriteName();
             $this->eventDispatcher->dispatch(
                 Events::PRE_COMMIT,
                 new CommitEvent($this->getCommitMode(), $bulkQueries)
@@ -507,7 +513,11 @@ class Manager
             unset($this->indexSettings['body']['mappings']);
         }
 
-        return $this->getClient()->indices()->create($this->indexSettings);
+        $settings = $this->indexSettings;
+        $settings['index'] = $this->getIndexWriteName();
+        unset($settings['index_pattern']);
+
+        return $this->getClient()->indices()->create($settings);
     }
 
     /**
@@ -515,7 +525,7 @@ class Manager
      */
     public function dropIndex()
     {
-        return $this->getClient()->indices()->delete(['index' => $this->getIndexName()]);
+        return $this->getClient()->indices()->delete(['index' => $this->getIndexWriteName()]);
     }
 
     /**
@@ -543,17 +553,31 @@ class Manager
      */
     public function indexExists()
     {
-        return $this->getClient()->indices()->exists(['index' => $this->getIndexName()]);
+        return $this->getClient()->indices()->exists(['index' => $this->getIndexWriteName()]);
     }
 
     /**
-     * Returns index name this connection is attached to.
-     *
-     * @return string
+     * @throws \Exception
      */
     public function getIndexName()
     {
-        return $this->indexSettings['index'];
+        return $this->getIndexWriteName();
+    }
+
+    /**
+     * @return string
+     */
+    public function getIndexReadName()
+    {
+        return $this->indexSettings['index'].'*';
+    }
+
+    /**
+     * @return string
+     */
+    public function getIndexWriteName()
+    {
+        return $this->indexSettings['index'].'-'.$this->indexDateString;
     }
 
     /**
@@ -591,7 +615,7 @@ class Manager
      */
     public function clearCache()
     {
-        $this->getClient()->indices()->clearCache(['index' => $this->getIndexName()]);
+        $this->getClient()->indices()->clearCache(['index' => $this->getIndexWriteName()]);
     }
 
     /**
@@ -607,23 +631,25 @@ class Manager
     {
         $type = $this->resolveTypeName($className);
 
-        $params = [
-            'index' => $this->getIndexName(),
-            'type' => $type,
-            'id' => $id,
+        $query = [
+            'query' => [
+                'ids' => [
+                    'type' => $type,
+                    'values' => [$id]
+                ]
+            ]
         ];
 
-        if ($routing) {
-            $params['routing'] = $routing;
-        }
+        $result = $this->search([$type], $query);
 
-        try {
-            $result = $this->getClient()->get($params);
-        } catch (Missing404Exception $e) {
+        if (empty($result['hits']['hits'])) {
             return null;
         }
 
-        return $this->getConverter()->convertToDocument($result, $this);
+        $result = $result['hits']['hits'][0];
+        $result = $this->getConverter()->convertToDocument($result, $this);
+
+        return $result;
     }
 
     /**
@@ -662,7 +688,7 @@ class Manager
      */
     public function getSettings()
     {
-        return $this->getClient()->indices()->getSettings(['index' => $this->getIndexName()]);
+        return $this->getClient()->indices()->getSettings(['index' => $this->getIndexWriteName()]);
     }
 
     /**
@@ -673,7 +699,7 @@ class Manager
      */
     public function getAliases($params = [])
     {
-        return $this->getClient()->indices()->getAliases(array_merge(['index' => $this->getIndexName()], $params));
+        return $this->getClient()->indices()->getAliases(array_merge(['index' => $this->getIndexWriteName()], $params));
     }
 
     /**

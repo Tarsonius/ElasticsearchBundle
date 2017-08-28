@@ -104,7 +104,7 @@ class Repository
         $args = [];
         $manager = $this->getManager();
         $args['body']['docs'] = [];
-        $args['index'] = $manager->getIndexName();
+        $args['index'] = $manager->getIndexReadName();
         $args['type'] = $this->getType();
 
         foreach ($ids as $id) {
@@ -293,7 +293,7 @@ class Repository
     {
         $body = array_merge(
             [
-                'index' => $this->getManager()->getIndexName(),
+                'index' => $this->getManager()->getIndexReadName(),
                 'type' => $this->type,
                 'body' => $search->toArray(),
             ],
@@ -324,7 +324,7 @@ class Repository
     public function remove($id, $routing = null)
     {
         $params = [
-            'index' => $this->getManager()->getIndexName(),
+            'index' => $this->getManager()->getIndexWriteName(),
             'type' => $this->type,
             'id' => $id,
         ];
@@ -360,7 +360,7 @@ class Repository
         $params = array_merge(
             [
                 'id' => $id,
-                'index' => $this->getManager()->getIndexName(),
+                'index' => $this->getManager()->getIndexReadName(),
                 'type' => $this->type,
                 'body' => $body,
             ],

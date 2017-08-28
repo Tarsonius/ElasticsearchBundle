@@ -24,15 +24,15 @@ class DocumentTest extends AbstractElasticsearchTestCase
         $repo = $manager->getRepository('TestBundle:Product');
 
         $type = $repo->getType();
-        $mappings = $manager->getClient()->indices()->getMapping(['index' => $manager->getIndexName()]);
+        $mappings = $manager->getClient()->indices()->getMapping(['index' => $manager->getIndexWriteName()]);
 
-        $this->assertArrayHasKey($type, $mappings[$manager->getIndexName()]['mappings']);
+        $this->assertArrayHasKey($type, $mappings[$manager->getIndexWriteName()]['mappings']);
 
         $managerMappings = $manager->getMetadataCollector()->getMapping('TestBundle:Product');
 
         $this->assertEquals(
             sort($managerMappings['properties']),
-            sort($mappings[$manager->getIndexName()]['mappings'][$type])
+            sort($mappings[$manager->getIndexWriteName()]['mappings'][$type])
         );
     }
 }

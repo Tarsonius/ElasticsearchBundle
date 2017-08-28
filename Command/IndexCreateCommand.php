@@ -56,7 +56,7 @@ class IndexCreateCommand extends AbstractManagerAwareCommand
     {
         $io = new SymfonyStyle($input, $output);
         $manager = $this->getManager($input->getOption('manager'));
-        $originalIndexName = $manager->getIndexName();
+        $originalIndexName = $manager->getIndexWriteName();
 
         if ($input->getOption('dump')) {
             $io->note("Index mappings:");
@@ -80,7 +80,7 @@ class IndexCreateCommand extends AbstractManagerAwareCommand
             $io->note(
                 sprintf(
                     'Index `%s` already exists in `%s` manager.',
-                    $manager->getIndexName(),
+                    $manager->getIndexWriteName(),
                     $input->getOption('manager')
                 )
             );
@@ -93,24 +93,24 @@ class IndexCreateCommand extends AbstractManagerAwareCommand
         $io->text(
             sprintf(
                 'Created `<comment>%s</comment>` index for the `<comment>%s</comment>` manager. ',
-                $manager->getIndexName(),
+                $manager->getIndexWriteName(),
                 $input->getOption('manager')
             )
         );
 
-        if ($input->getOption('alias') && $originalIndexName != $manager->getIndexName()) {
+        if ($input->getOption('alias') && $originalIndexName != $manager->getIndexWriteName()) {
             $params['body'] = [
                 'actions' => [
                     [
                         'add' => [
-                            'index' => $manager->getIndexName(),
+                            'index' => $manager->getIndexWriteName(),
                             'alias' => $originalIndexName,
                         ]
                     ]
                 ]
             ];
             $message = 'Created an alias `<comment>'.$originalIndexName.'</comment>` for the `<comment>'.
-                $manager->getIndexName().'</comment>` index. ';
+                $manager->getIndexWriteName().'</comment>` index. ';
 
             if ($manager->getClient()->indices()->existsAlias(['name' => $originalIndexName])) {
                 $currentAlias = $manager->getClient()->indices()->getAlias(

@@ -34,7 +34,7 @@ class IndexSuffixFinder
         }
 
         $date = $time->format('Y.m.d');
-        $indexName = $manager->getIndexName();
+        $indexName = $manager->getIndexWriteName();
 
         $nameBase = $indexName . '-' . $date;
         $name = $nameBase;

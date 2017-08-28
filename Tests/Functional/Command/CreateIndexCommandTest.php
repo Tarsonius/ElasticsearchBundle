@@ -40,7 +40,7 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
 
         $expectedOutput = sprintf(
             '/Index `%s` already exists in `%s` manager./',
-            $manager->getIndexName(),
+            $manager->getIndexWriteName(),
             $manager->getName()
         );
 
@@ -78,7 +78,7 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
         $manager = $this->getManager();
         $manager->dropIndex();
 
-        $aliasName = $manager->getIndexName();
+        $aliasName = $manager->getIndexWriteName();
 
         $this->assertFalse($manager->indexExists());
         $this->assertFalse($manager->getClient()->indices()->existsAlias(['name' => $aliasName]));
@@ -91,14 +91,14 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
             ]
         );
 
-        $indexName = $manager->getIndexName();
+        $indexName = $manager->getIndexWriteName();
         $this->assertTrue($manager->getClient()->indices()->exists(['index' => $indexName]));
         $this->assertTrue($manager->getClient()->indices()->existsAlias(['name' => $aliasName]));
         $aliases = $manager->getClient()->indices()->getAlias(['name' => $aliasName]);
         $indexNamesFromAlias = array_keys($aliases);
         $this->assertCount(1, $indexNamesFromAlias);
         $this->assertEquals($indexName, $indexNamesFromAlias[0]);
-        $this->assertNotEquals($manager->getIndexName(), $aliasName);
+        $this->assertNotEquals($manager->getIndexWriteName(), $aliasName);
 
         //Drop index manually.
         $manager->dropIndex();
@@ -113,7 +113,7 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
         $manager = $this->getManager();
         $manager->dropIndex();
 
-        $aliasName = $manager->getIndexName();
+        $aliasName = $manager->getIndexWriteName();
 
         $this->assertFalse($manager->indexExists());
         $this->assertFalse($manager->getClient()->indices()->existsAlias(['name' => $aliasName]));
@@ -126,10 +126,10 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
             ]
         );
 
-        $indexName = $manager->getIndexName();
+        $indexName = $manager->getIndexWriteName();
         $this->assertTrue($manager->getClient()->indices()->exists(['index' => $indexName]));
         $this->assertTrue($manager->getClient()->indices()->existsAlias(['name' => $aliasName]));
-        $this->assertNotEquals($manager->getIndexName(), $aliasName);
+        $this->assertNotEquals($manager->getIndexWriteName(), $aliasName);
 
         $manager->setIndexName($aliasName);
         $commandTester->execute(
@@ -140,7 +140,7 @@ class CreateIndexCommandTest extends AbstractElasticsearchTestCase
             ]
         );
 
-        $indexName2 = $manager->getIndexName();
+        $indexName2 = $manager->getIndexWriteName();
         $this->assertTrue($manager->getClient()->indices()->exists(['index' => $indexName2]));
         $this->assertTrue($manager->getClient()->indices()->existsAlias(['name' => $aliasName]));
 

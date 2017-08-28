@@ -110,6 +110,7 @@ class ManagerFactory
 
         $indexSettings = [
             'index' => $connection['index_name'],
+            'index_pattern' => $connection['index_pattern'],
             'body' => array_filter(
                 [
                     'settings' => array_merge(

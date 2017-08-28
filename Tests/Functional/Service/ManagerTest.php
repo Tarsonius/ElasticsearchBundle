@@ -218,7 +218,7 @@ class ManagerTest extends AbstractElasticsearchTestCase
     {
         $uniqueIndexName = 'test_index_' . uniqid();
         $manager = $this->getManager();
-        $indexName = $manager->getIndexName();
+        $indexName = $manager->getIndexWriteName();
         $this->assertTrue($manager->getClient()->indices()->exists(['index' => $indexName]));
         $manager->setIndexName($uniqueIndexName);
         $manager->createIndex();
